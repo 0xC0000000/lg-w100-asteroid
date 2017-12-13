@@ -1,0 +1,56 @@
+#+title: Yocto fix issue for fetch tar package failed
+#+options: ^:nil
+
+* reference
++ https://www.yoctoproject.org/documentation
++ https://wiki.yoctoproject.org/wiki/Working_Behind_a_Network_Proxy
++ https://asteroidos.org/
+
+* background
+I compile the asteroid for my lg w100 wear. But I cannot fetch the
+`system-dory-.tar.gz' behind the GFW.
+
+err info as below:
+#+BEGIN_SRC sh
+ERROR: android-lollipop-r0 do_fetch: Fetcher failure for URL:
+'https://dl.dropboxusercontent.com/s/cqvt6d3hkd651ku/system-dory.tar.gz'.
+Unable to fetch URL from any source.
+#+END_SRC
+
+* fix steps
+Use proxy to fix it.
+
++ export the proxy env (use your own proxy settings)
+#+BEGIN_SRC sh
+➜  build git:(next) export http_proxy='http://127.0.0.1:1080/'
+➜  build git:(next) export https_proxy='https://127.0.0.1:1080/'
+#+END_SRC
+
++ do compile again
+#+BEGIN_SRC sh
+➜  build git:(next) bitbake asteroid-image
+#+END_SRC
+
+* base knowledge
+** Sources
+BitBake uses the _SRC_URI_ variable to point to source files regardless of their
+location. Each recipe must have a SRC_URI variable that points to the source.
+
+Another area that plays a significant role in where source files come from is
+pointed to by the _DL_DIR_ variable. This area is a cache that can hold previously
+downloaded source.
+
+** build/downloads/
+This directory contains downloaded upstream source tarballs. You can reuse the
+directory for multiple builds or move the directory to another location. You
+can control the location of this directory through the _DL_DIR_ variable.
+
+** DL_DIR
+The central download directory used by the build process to store downloads.
+By default, DL_DIR gets files suitable for mirroring for everything except Git
+repositories. If you want tarballs of Git repositories, use the
+*BB_GENERATE_MIRROR_TARBALLS* variable.
+
+You can set this directory by defining the DL_DIR variable in the conf/local.conf
+file. This directory is self-maintaining and you should not have to touch it.
+By default, the directory is downloads in the Build Directory.

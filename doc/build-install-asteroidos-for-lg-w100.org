@@ -1,0 +1,150 @@
+#+title: Build & Install asteroidos for lg-w100
+#+options: ^:nil
+
+* reference
++ https://asteroidos.org/wiki/building-asteroidos/
++ https://asteroidos.org/install/dory/
++ https://github.com/AsteroidOS/asteroid
++ https://github.com/AsteroidOS/AsteroidOSSync
+
+* build steps
+** clone main repository
+#+BEGIN_SRC sh
+git clone https://github.com/AsteroidOS/asteroid.git
+cd asteroid/
+#+END_SRC
+
+This repository only contains a shell script that populates src/ with OpenEmbedded
+and the appropriate Asteroid layers. Then, it setups the environment for a bitbake
+build.
+
+** setup a build for dory
+dory (the LG G Watch)
+#+BEGIN_SRC sh
+. ./prepare-build.sh dory
+#+END_SRC
+
+If the envrioment has been correctly setup, you should now be in the build
+subdirectory. Make sure you have the following build dependencies before starting
+a build:
+#+BEGIN_SRC sh
+git build-essential cpio diffstat gawk chrpath texinfo
+#+END_SRC
+
+** trigger a build
+Once the environment is prepared, you can simply trigger a build with the
+following command:
+#+BEGIN_SRC sh
+bitbake asteroid-image
+#+END_SRC
+
+After a while, the generated image should be available in build/tmp-glibc/deply/images/dory/.
+
+* install the built AsteroidOS to lg-w100
+** download the installation files and tools
+#+BEGIN_SRC sh
+sudo apt install android-tools-adb android-tools-fastboot
+#+END_SRC
+
+** unlock lg-w100 bootloader
+*** enable ADB
+Installing AsteroidOS requires an unlocked bootloader and entering the bootloader
+requires ADB in Android Wear. Enable ADB with the following steps:
++ On the watch, head to Settings > About > and keep tapping on *Build number* until
+  it tells you you are a developer
++ Then swipe back and tap on the new *Developer Options* under About
++ Tap on *ADB Debugging* and then select the checkmark to accept it.
+
+*** do unlock
+Enter the following commands in a terminal with your watch connected:
+#+BEGIN_SRC sh
+adb reboot bootloader
+fastboot oem unlock
+#+END_SRC
+
+Then Follow the instructions on your watch's screen. Please note it may void
+your warranty.
+
+** flash and boot AsteroidOS
+I use the real installation.
+
+Enter the build directory of AsteroidOS first.
+
+While in *FASTBOOT MODE*, flash the userdata and boot partitions with
+#+BEGIN_SRC sh
+$ fastboot flash userdata ./tmp-glibc/deploy/images/dory/asteroid-image-dory.ext4
+$ fastboot flash boot ./tmp-glibc/deploy/images/dory/zImage-dtb-dory.fastboot
+$ fastboot continue
+#+END_SRC
+
+the operation log as below:
+#+BEGIN_SRC shell
+➜  build git:(next) fastboot flash userdata ./tmp-glibc/deploy/images/dory/asteroid-image-dory.ext4 
+target reported max download size of 268435456 bytes
+Invalid sparse file format at header magi
+erasing 'userdata'...
+OKAY [  3.010s]
+sending sparse 'userdata' (248520 KB)...
+OKAY [  7.931s]
+writing 'userdata'...
+OKAY [ 31.533s]
+sending sparse 'userdata' (94592 KB)...
+OKAY [  3.123s]
+writing 'userdata'...
+OKAY [ 74.941s]
+finished. total time: 120.539s
+➜  build git:(next) fastboot flash boot ./tmp-glibc/deploy/images/dory/zImage-dtb-dory.fastboot 
+target reported max download size of 268435456 bytes
+sending 'boot' (17968 KB)...
+OKAY [  0.680s]
+writing 'boot'...
+OKAY [  1.356s]
+finished. total time: 2.035s
+➜  build git:(next) fastboot continue
+resuming boot...
+OKAY [  0.002s]
+finished. total time: 0.002s
+#+END_SRC
+* error fix
+** adb no permissions
+when i try
+#+BEGIN_SRC sh
+$ adb devices
+#+END_SRC
+
+I get the result
+#+BEGIN_SRC sh
+List of devices attached
+????????????    no permissions
+#+END_SRC
+
+fix it by using:
+Try to restart the Adb server
+#+BEGIN_SRC sh
+sudo adb kill-server
+sudo adb start-server
+#+END_SRC
+
+Then connect your device turn Debugging on.
+
+Also try below steps if failed:
+You need to provide permission on your Android device.
+Go to Settings>Developer options. Try turning Usb Debugging off and then on
+again. Remove the cable and reconnect it. Also try deleting all saved
+authorizations from Developer options. It should now ask for debugging
+permission by a prompt on your phone.
+* base knowledge
+** adb
+The Android Debug Bridge (adb) is a development tool that facilitates communication
+between an Android device and a personal computer. ADB consists of a client and
+server part each communicating with the other.This communication is most often
+done over a USB cable.
+
+** fastboot
+Fastboot is basically a diagnostic tool used to modify the Android file system
+from a computer when the smartphone is in bootloader mode. The commands are
+basic, and include, for example, to 'flash' (install) a boot image or a bootloader.
+
+
+
+

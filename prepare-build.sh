@@ -53,6 +53,10 @@ elif [[ "$1" == "git-"* ]]; then
 else
     ROOTDIR=`pwd`
     mkdir -p src build/conf
+	[ ! -d build/downloads ] && {
+		mkdir -p build/downloads
+		cp dl_packages/* build/downloads/
+	}
 
     if [ "$#" -gt 0 ]; then
         export MACHINE=${1}
